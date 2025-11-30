@@ -4,13 +4,14 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <time.h>
+#include "utils/utils.h"
 
-void print_time() {
+/*void print_time() {
 	time_t now = time(NULL);
 	char *timestr = ctime(&now);
 	timestr[strlen(timestr)-1] = '\0'; // usuwanie \n
 	printf("[%s]", timestr);
-}
+}*/
 
 int main() {
     // tworzenie socketu
