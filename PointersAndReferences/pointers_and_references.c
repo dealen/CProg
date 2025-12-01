@@ -42,7 +42,7 @@ int main() {
 	add_and_print_but_with_ref(&a);
 	printf("a after modification by add_and_print_but_with_ref = %d\n", a);
 
-	printf("================================================");
+	printf("================================================\n");
 
 	Person john = {"John", 30};
 	printf("\nOriginal: %s is %d\n", john.name, john.age);
