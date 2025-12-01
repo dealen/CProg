@@ -5,13 +5,7 @@
 #include <netinet/in.h>
 #include <time.h>
 #include "utils/utils.h"
-
-/*void print_time() {
-	time_t now = time(NULL);
-	char *timestr = ctime(&now);
-	timestr[strlen(timestr)-1] = '\0'; // usuwanie \n
-	printf("[%s]", timestr);
-}*/
+#include "modules/http.h"
 
 int main() {
     // tworzenie socketu
@@ -68,37 +62,34 @@ int main() {
 
         // czekanie na informacje od clienta
         char buffer[4096] = {0};
-        ssize_t bytes = read(client, buffer, sizeof(buffer) - 1);
+        size_t bytes = read(client, buffer, sizeof(buffer) -1);
 
 	print_time();
-        printf("[%d] === Otrzymałem %ld bajtów ===\n", request_num, bytes);
-        
-        // Sprawdź czy są dane
-        if (bytes <= 0) {
-	    print_time();
-            printf("[%d] Brak danych od klienta\n", request_num);
-            close(client);
-            continue;
-        }
-        
-        char *newLine = strchr(buffer, '\r');
-        if (newLine) *newLine = '\0';
+	printf("[%d] === Otrzymałem %ld bajtów ---\n", request_num, bytes);
+
+	// parsing request
+	HttpRequest req;
+	if (http_parse_request(buffer, bytes, &req) < 0){
+		print_time();
+		printf("[%d] Błąd parsowania żądania\n", request_num);
+		close(client);
+		continue;
+	}
+
 	print_time();
-        printf("[%d] Żądanie: %s\n", request_num, buffer);
+	printf("[%d] %s %s %s\n", request_num, req.method, req.path, req.version);
 
-        const char *body = "Hello World!";
-        char response[1024];
+	// creating response
+	const char *body = "Hello World";
+	char response[1024];
+	int len = http_build_response(response, sizeof(response), 200, body);
 
-        // Wysyłanie odpowiedzi - POPRAWIONY FORMAT!
-        int len = snprintf(response, sizeof(response),
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Type: text/html; charset=utf-8\r\n"
-            "Content-Length: %ld\r\n"
-            "Connection: close\r\n"
-            "\r\n"
-            "%s",
-            strlen(body), body
-        );
+	if (len < 0) {
+		print_time();
+		printf("[%d] Błąd tworzenia odpowiedzi\n", request_num);
+		close(client);
+		continue;
+	}
 
 	print_time();
         printf("[%d] Wysylanie odpowiedzi (%d bajtów)...\n", request_num, len);
