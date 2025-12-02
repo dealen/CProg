@@ -7,7 +7,7 @@ void add_and_print(int a){
 	printf("Output equals [%d] which is input [%d] plus 1.\n", a, a_original_value); 
 }
 
-void add_and_print_but_with_ref(int *a){
+void add_and_print_with_pointer(int *a){
 	int a_original_value = *a;
 	*a = *a + 1;
 	printf("Output equals [%d] which is input [%d] plus 1.\n", *a, a_original_value);
@@ -23,7 +23,7 @@ void make_older_copy(Person p) {
 	printf("Inside function: %s is %d\n", p.name, p.age);
 }
 
-void make_older_ref(Person *p){
+void make_older_ptr(Person *p){
 	
 	if (p == NULL){
 		printf("Error: Null pointer!");
@@ -39,8 +39,8 @@ int main() {
 	add_and_print(a);
 	printf("a after modification by add_and_print = %d\n", a);
 
-	add_and_print_but_with_ref(&a);
-	printf("a after modification by add_and_print_but_with_ref = %d\n", a);
+	add_and_print_with_pointer(&a);
+	printf("a after modification by add_and_print_with_pointer = %d\n", a);
 
 	printf("================================================\n");
 
@@ -50,11 +50,11 @@ int main() {
 	make_older_copy(john);
 	printf("After copy: %s is %d\n", john.name, john.age);
 
-	make_older_ref(&john);
-	printf("After ref: %s is %d\n", john.name, john.age);
+	make_older_ptr(&john);
+	printf("After ptr: %s is %d\n", john.name, john.age);
 
 	Person kuba;
-	make_older_ref(&kuba);
+	make_older_ptr(&kuba);
 
 	return 0;
 }
