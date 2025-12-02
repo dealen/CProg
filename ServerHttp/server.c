@@ -4,8 +4,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <time.h>
+
 #include "utils/utils.h"
 #include "modules/http.h"
+#include "modules/router.h"
 
 int main() {
     // tworzenie socketu
@@ -80,9 +82,15 @@ int main() {
 	printf("[%d] %s %s %s\n", request_num, req.method, req.path, req.version);
 
 	// creating response
-	const char *body = "Hello World";
-	char response[1024];
-	int len = http_build_response(response, sizeof(response), 200, body);
+	//const char *body = "Hello World";
+	//char response[1024];
+	//int len = http_build_response(response, sizeof(response), 200, body);
+
+	char body[1024];
+	int status_code = route_handle(&req, body, sizeof(body));
+
+	char response[2048];
+	int len = http_build_response(response, sizeof(response), status_code, body);
 
 	if (len < 0) {
 		print_time();

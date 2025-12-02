@@ -1,0 +1,6 @@
+# CodeQL analysis artifacts
+_codeql_detected_source_root
+
+# Compiled binaries
+*.o
+*.out
