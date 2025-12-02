@@ -19,6 +19,13 @@ static int method_matches(const char *pattern, const char *method) {
 	return strcmp(pattern, method) == 0 || strcmp(pattern, "*") == 0;
 }
 
+/**
+ * Handles HTTP request routing by matching the request against registered routes.
+ * @param req Pointer to the HTTP request to route
+ * @param response_body Buffer to store the response body
+ * @param body_size Size of the response_body buffer
+ * @return HTTP status code (200, 404, 500, etc.)
+ */
 int route_handle(const HttpRequest *req, char *response_body, size_t body_size) {
 	if (!req || !response_body) {
 		return 500;

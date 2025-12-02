@@ -7,7 +7,7 @@ void add_and_print(int a){
 	printf("Output equals [%d] which is input [%d] plus 1.\n", a, a_original_value); 
 }
 
-void add_and_print_but_with_ptr(int *a){
+void add_and_print_with_pointer(int *a){
 	int a_original_value = *a;
 	*a = *a + 1;
 	printf("Output equals [%d] which is input [%d] plus 1.\n", *a, a_original_value);
@@ -39,10 +39,10 @@ int main() {
 	add_and_print(a);
 	printf("a after modification by add_and_print = %d\n", a);
 
-	add_and_print_but_with_ptr(&a);
-	printf("a after modification by add_and_print_but_with_ptr = %d\n", a);
+	add_and_print_with_pointer(&a);
+	printf("a after modification by add_and_print_with_pointer = %d\n", a);
 
-	printf("================================================");
+	printf("================================================\n");
 
 	Person john = {"John", 30};
 	printf("\nOriginal: %s is %d\n", john.name, john.age);
