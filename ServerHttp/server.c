@@ -1,18 +1,59 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <time.h>
+#include <pthread.h>
 
 #include "utils/utils.h"
 #include "modules/http.h"
 #include "modules/router.h"
 
-int main() {
-    // tworzenie socketu
+// Function which runs the thread (equivalent to Task.Run)
+// takes in void* and return void*
+void* handle_client(void *client_socket_pointer) {
+    int client_socket = *((int*)client_socket_pointer);
+    free(client_socket_pointer); // releasing allocated memory in method main
+
+    printf("[Thread %lu] Processing client 's request %d\n", pthread_self(), client_socket);
+
+    // for simulation of some long running process
+    sleep(5);
+
+    char buffer[4096] = {0};
+    ssize_t bytes = read(client_socket, buffer, sizeof(buffer) - 1);
+
+    if (bytes > 0) {
+        // ignoring content of the request, just resposning
+        const char *body = "Hello from Thread!";
+        char response[1024];
+
+        int len = snprintf(response, sizeof(response),
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/plain\r\n"
+            "Content-Length: %ld\r\n"
+            "\r\n"
+            "%s",
+            strlen(body), body
+        );
+
+        write(client_socket, response, len);
+    }
+
+    close(client_socket);
+    printf("[Thread %lu] End of processing clients request %d\n", pthread_self(), client_socket);
+
+    return NULL;
+}
+
+int main()
+{
+    // socket creation
     int server = socket(AF_INET, SOCK_STREAM, 0);
-    if (server < 0) {
+    if (server < 0)
+    {
         perror("socket");
         return 1;
     }
@@ -20,99 +61,66 @@ int main() {
     int opt = 1;
     setsockopt(server, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-    // konfiguracja adres
+    // configuring address
     struct sockaddr_in addr = {0};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(8080);
     addr.sin_addr.s_addr = INADDR_ANY;
 
-    // bindowanie do portu
-    if (bind(server, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+    // binding to port
+    if (bind(server, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+    {
         perror("bind");
         return 1;
     }
 
-    // nasłuchiwanie
-    if (listen(server, 10) < 0) {
+    // listening...
+    if (listen(server, 10) < 0)
+    {
         perror("listen");
         return 1;
     }
 
     print_time();
-    printf("Server dziala na http://localhost:8080\n");
-    printf("Nacisnij Ctrl+C aby zatrzymać\n\n");
+    printf("Server working on http://localhost:8080\n");
+    printf("Press Ctrl+C to terminate\n\n");
     fflush(stdout);
 
     int request_num = 0;
 
-    while(1) {
+    while (1)
+    {
         request_num++;
 
-	print_time();
-        printf("[%d] Czekam na polaczenie...\n", request_num);
+        print_time();
+        printf("[%d] Waiting for requests...\n", request_num);
         fflush(stdout);
 
-        // blokowanie programu az ktoś się połaczy
+        // checking for any client requests
         int client = accept(server, NULL, NULL);
-        if (client < 0) {
+        if (client < 0)
+        {
             perror("accept");
             continue;
         }
-        
-	print_time();
-        printf("[%d] Ktoś się połaczył! Socket clienta: %d\n", request_num, client);
 
-        // czekanie na informacje od clienta
-        char buffer[4096] = {0};
-        size_t bytes = read(client, buffer, sizeof(buffer) -1);
+        printf("[Main] new connection, creating new thread.");
 
-	print_time();
-	printf("[%d] === Otrzymałem %ld bajtów ---\n", request_num, bytes);
+        int *pclient = malloc(sizeof(int));
+        *pclient = client;
 
-	// parsing request
-	HttpRequest req;
-	if (http_parse_request(buffer, bytes, &req) < 0){
-		print_time();
-		printf("[%d] Błąd parsowania żądania\n", request_num);
-		close(client);
-		continue;
-	}
+        pthread_t thread_id;
 
-	print_time();
-	printf("[%d] %s %s %s\n", request_num, req.method, req.path, req.version);
-
-	// creating response
-	//const char *body = "Hello World";
-	//char response[1024];
-	//int len = http_build_response(response, sizeof(response), 200, body);
-
-	char body[1024];
-	int status_code = route_handle(&req, body, sizeof(body));
-
-	char response[2048];
-	int len = http_build_response(response, sizeof(response), status_code, body);
-
-	if (len < 0) {
-		print_time();
-		printf("[%d] Błąd tworzenia odpowiedzi\n", request_num);
-		close(client);
-		continue;
-	}
-
-	print_time();
-        printf("[%d] Wysylanie odpowiedzi (%d bajtów)...\n", request_num, len);
-        ssize_t sent = write(client, response, len);
-        if (sent < 0) {
-            perror("write");
+        if (pthread_create(&thread_id, NULL, handle_client, pclient) != 0) {
+            perror("pthread_create");
+            free(pclient);
+            close(client);
         } else {
-            printf("[%d] Wysłano %ld bajtów\n", request_num, sent);
+            // detach = fire & forget
+            // we are not going to wait for this thread, system will clean up on its own
+            pthread_detach(thread_id);
         }
 
-        // zamykanie socketu clienta!!!
-        close(client);
-	print_time();
-        printf("[%d] Zamknięcie socketu clienta\n\n", request_num);
-	fflush(stdout);
     }
 
     close(server);
