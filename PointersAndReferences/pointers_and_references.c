@@ -1,6 +1,5 @@
 #include <stdio.h>
 
-
 void add_and_print(int a){
 	int a_original_value = a;
 	a = a + 1;

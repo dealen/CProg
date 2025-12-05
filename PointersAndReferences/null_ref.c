@@ -9,6 +9,10 @@ void print_value(int *ptr) {
 	printf("Value: %d\n", *ptr);
 }
 
+void print_some_message() {
+  printf("2025-12-04");
+}
+
 int main() {
 	int value = 42;
 	int *valid_pointer = &value;
